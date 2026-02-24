@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Narrative Sentiment Workbench</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <div class="bg-shape bg-shape-a"></div>
+  <div class="bg-shape bg-shape-b"></div>
+
+  <aside class="history-dock">
+    <div class="dock-header">
+      <h2>Submissions</h2>
+      <button id="clearHistoryBtn" class="ghost-btn" type="button">Clear</button>
+    </div>
+    <p class="dock-note">Load previous text for quick editing or resubmission.</p>
+    <div id="historyList" class="history-list"></div>
+  </aside>
+
+  <main class="center-stage">
+    <section class="input-panel">
+      <h1>Theme-First People Sentiment Analysis</h1>
+      <p class="subtitle">
+        Upload article text to detect theme first, then analyze people sentiment trajectories.
+      </p>
+
+      <form id="analyzeForm" enctype="multipart/form-data">
+        <div class="field-row">
+          <label for="titleInput">Submission Title</label>
+          <input id="titleInput" name="title" type="text" placeholder="Optional title">
+        </div>
+
+        <div class="field-row">
+          <label class="file-label" for="fileInput">Upload file (.txt, .doc, .docx, .rtf)</label>
+          <input id="fileInput" name="file" type="file" accept=".txt,.doc,.docx,.rtf,.md">
+          <span id="fileName" class="file-name">No file selected</span>
+        </div>
+
+        <div class="field-row">
+          <label for="urlInput">Or use a web link</label>
+          <div class="url-row">
+            <input
+              id="urlInput"
+              name="source_url"
+              type="url"
+              placeholder="https://example.com/files-or-story-page"
+            >
+            <button id="discoverBtn" type="button" class="ghost-btn">Find Files</button>
+            <button id="analyzeWebBtn" type="button">Analyze Web Page</button>
+          </div>
+          <div id="discoveredFiles" class="discovered-files"></div>
+        </div>
+
+        <div class="field-row">
+          <label for="textInput">Or paste article text</label>
+          <textarea
+            id="textInput"
+            name="text"
+            placeholder="Paste your article text here..."
+            rows="10"
+          ></textarea>
+        </div>
+
+        <div class="field-row">
+          <label class="check-row" for="useGenAiInput">
+            <input id="useGenAiInput" name="use_genai" type="checkbox">
+            Use GenAI for theme/person extraction (optional)
+          </label>
+          <p class="field-help">Requires server `OPENAI_API_KEY`; falls back to local analysis automatically.</p>
+        </div>
+
+        <div class="action-row">
+          <button id="analyzeBtn" type="submit">Analyze Theme + People</button>
+          <button id="resetBtn" type="button" class="ghost-btn">Reset</button>
+        </div>
+        <p id="status" class="status"></p>
+      </form>
+    </section>
+
+    <section id="resultPanel" class="result-panel hidden">
+      <div class="result-header">
+        <h2 id="resultTitle">Analysis Results</h2>
+        <p id="resultMeta"></p>
+      </div>
+
+      <div class="theme-card">
+        <h3>Detected Theme (First)</h3>
+        <p id="primaryTheme" class="theme-primary">General / Mixed</p>
+        <div id="themeChips" class="theme-chips"></div>
+      </div>
+
+      <div class="metric-grid">
+        <article class="metric-card">
+          <span>Words</span>
+          <strong id="wordCount">0</strong>
+        </article>
+        <article class="metric-card">
+          <span>People Detected</span>
+          <strong id="peopleCount">0</strong>
+        </article>
+        <article class="metric-card">
+          <span>Avg People Sentiment</span>
+          <strong id="avgPeopleSentiment">0.00</strong>
+        </article>
+      </div>
+
+      <div class="summary-card">
+        <h3>People Sentiment Summary</h3>
+        <p id="analysisSummary"></p>
+      </div>
+
+      <div class="chart-grid">
+        <article class="chart-card">
+          <h3>People Sentiment Trajectories</h3>
+          <div id="characterChart" class="character-chart"></div>
+        </article>
+      </div>
+
+      <article class="table-card">
+        <h3>People Breakdown</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Person</th>
+                <th>Sentiment</th>
+                <th>Score</th>
+                <th>Mentions</th>
+                <th>Evidence</th>
+              </tr>
+            </thead>
+            <tbody id="peopleTableBody"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
