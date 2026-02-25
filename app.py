@@ -1225,6 +1225,25 @@ def build_summary(theme: dict[str, Any], people: list[dict[str, Any]]) -> str:
     )
 
 
+def build_one_sentence_summary(theme: dict[str, Any], people: list[dict[str, Any]]) -> str:
+    primary_theme = theme.get("primary", "General / Mixed")
+    if not people:
+        return (
+            f"The primary theme appears to be {primary_theme}, but repeated person names were too limited for reliable people-level sentiment."
+        )
+
+    most_positive = max(people, key=lambda item: item["score"])
+    most_negative = min(people, key=lambda item: item["score"])
+    if most_positive["name"] == most_negative["name"]:
+        return (
+            f"The primary theme is {primary_theme}, and {most_positive['name']} carries the overall people sentiment at {most_positive['score']:+.2f}."
+        )
+
+    return (
+        f"The primary theme is {primary_theme}, with {most_positive['name']} showing the most positive sentiment ({most_positive['score']:+.2f}) while {most_negative['name']} shows the most negative sentiment ({most_negative['score']:+.2f})."
+    )
+
+
 def analyze_text(text: str, use_genai: bool = False) -> tuple[dict[str, Any], str | None]:
     segments = scene_split(text)
     segment_sources = {index + 1: scene for index, scene in enumerate(segments)}
@@ -1314,6 +1333,7 @@ def analyze_text(text: str, use_genai: bool = False) -> tuple[dict[str, Any], st
 
     word_count = len(WORD_RE.findall(text))
     summary = build_summary(theme, people_data)
+    one_sentence_summary = build_one_sentence_summary(theme, people_data)
     avg_people_sentiment = round(mean(item["score"] for item in people_data), 4) if people_data else 0.0
 
     return {
@@ -1334,6 +1354,7 @@ def analyze_text(text: str, use_genai: bool = False) -> tuple[dict[str, Any], st
         "people_data": people_data,
         "character_data": people_data,
         "summary": summary,
+        "one_sentence_summary": one_sentence_summary,
     }, analysis_warning
 
 

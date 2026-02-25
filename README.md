@@ -8,6 +8,7 @@ This app implements a text analysis workbench focused on article theme + people 
 - Centered analysis results with graphs:
   - Theme detection shown first
   - People-only sentiment trajectories (separated per person)
+  - One-sentence summary for quick readout
 - Optional GenAI-assisted theme/person extraction (`OPENAI_API_KEY`) with automatic local fallback
 - Compact submission history panel in the top-left for editing and resubmission
 
@@ -35,3 +36,16 @@ python app.py
 - Web-link discovery supports links to `.txt`, `.md`, `.rtf`, `.doc`, and `.docx` files.
 - People-name extraction excludes repetitive non-person terms and merges name variations (for cleaner person sentiment).
 - If GenAI is enabled in UI but no API key is configured, the app safely falls back to local analysis.
+
+## Local Training Pipeline
+
+If you want fully local model training from your own `.txt` story corpus, use:
+
+- [training/README.md](training/README.md)
+
+Quick start:
+
+```bash
+python training/scripts/train_models.py
+python training/scripts/analyze_story.py --input "path/to/story.txt"
+```

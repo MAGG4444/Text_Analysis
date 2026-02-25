@@ -237,7 +237,7 @@ function renderResult(record) {
   wordCount.textContent = analysis.word_count.toLocaleString();
   peopleCount.textContent = String(analysis.people_count ?? peopleData.length);
   avgPeopleSentiment.textContent = Number(analysis.avg_people_sentiment || 0).toFixed(2);
-  analysisSummary.textContent = analysis.summary;
+  analysisSummary.textContent = analysis.one_sentence_summary || analysis.summary || "";
 
   renderTheme(analysis.theme || {});
   renderCharacterChart(peopleData);
