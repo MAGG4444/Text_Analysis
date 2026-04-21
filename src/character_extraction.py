@@ -7,41 +7,103 @@ from typing import DefaultDict, Dict, Iterable, List, Set, Tuple
 COMMON_NON_NAMES = {
     "A",
     "After",
+    "Again",
+    "Ah",
     "All",
+    "Already",
+    "Also",
+    "Always",
     "An",
     "And",
     "As",
     "At",
     "Autumn",
+    "Be",
+    "Because",
+    "Before",
     "But",
+    "By",
+    "Come",
+    "Dear",
+    "Do",
+    "Each",
+    "Early",
+    "Even",
+    "Every",
+    "Far",
+    "Finally",
     "For",
     "Friday",
+    "From",
+    "God",
+    "Good",
     "He",
     "Her",
+    "Here",
     "His",
+    "How",
     "I",
     "If",
     "In",
+    "Into",
     "It",
+    "Just",
     "Later",
+    "Let",
+    "Little",
+    "Long",
+    "Look",
+    "Many",
+    "Maybe",
     "Monday",
+    "More",
     "Morning",
+    "Much",
+    "My",
+    "Never",
     "Night",
     "No",
+    "Not",
+    "Now",
+    "Oh",
     "On",
+    "Once",
+    "Only",
+    "Or",
+    "Perhaps",
     "Saturday",
     "She",
+    "So",
+    "Some",
+    "Soon",
     "Spring",
+    "Still",
     "Summer",
     "Sunday",
+    "That",
     "The",
     "Then",
+    "There",
     "They",
+    "This",
     "Thursday",
+    "Too",
     "Tuesday",
+    "Until",
+    "Upon",
+    "Very",
+    "Was",
     "Wednesday",
     "We",
+    "Well",
+    "What",
+    "When",
+    "Where",
+    "Who",
+    "Why",
     "Winter",
+    "With",
+    "Yet",
     "Yes",
     "You",
 }
@@ -60,9 +122,11 @@ SPEAKER_VERBS = (
     "told",
 )
 
+# Matches titled names (Mr. Smith) or capitalized words NOT immediately
+# following sentence-ending / quote-opening punctuation.
 NAME_PATTERN = re.compile(
     r"\b(?:Mr|Mrs|Ms|Dr|Prof)\.?\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b"
-    r"|\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b"
+    r"|(?<![.!?'\"\u2018\u2019\u201c\u201d\n])\s([A-Z][a-z]{1,}(?:\s+[A-Z][a-z]+)?)\b"
 )
 
 
@@ -76,12 +140,13 @@ def _canonicalize_name(candidate: str) -> Tuple[str | None, Set[str]]:
     if not tokens:
         return None, set()
 
-    canonical = tokens[0].title()
-    if canonical in COMMON_NON_NAMES or len(canonical) < 2:
+    first_token = tokens[0].title()
+    if first_token in COMMON_NON_NAMES or len(first_token) < 2:
         return None, set()
 
+    canonical = " ".join(token.title() for token in tokens)
     aliases = {canonical}
-    aliases.add(" ".join(token.title() for token in tokens))
+    aliases.add(first_token)
     if len(tokens) > 1:
         aliases.add(tokens[-1].title())
     return canonical, aliases
@@ -133,7 +198,8 @@ def _extract_rule_based_candidates(text: str) -> Tuple[Counter, DefaultDict[str,
     aliases: DefaultDict[str, Set[str]] = defaultdict(set)
 
     for match in NAME_PATTERN.finditer(text):
-        _register_candidate(match.group(0), counts, aliases, weight=1)
+        candidate = match.group(1) if match.group(1) else match.group(0)
+        _register_candidate(candidate, counts, aliases, weight=1)
 
     speaker_pattern = re.compile(
         rf"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:{'|'.join(SPEAKER_VERBS)})\b"
@@ -179,6 +245,25 @@ def extract_major_characters(
         if logger:
             logger.warning("No character candidates were detected.")
         return [], {}, {}
+
+    # Merge shorter names into longer ones when the shorter name is a
+    # leading word of the longer name (e.g. "Snow" → "Snow White").
+    all_names = list(combined_counts.keys())
+    absorbed: Set[str] = set()
+    for short in all_names:
+        short_words = short.lower().split()
+        for long in all_names:
+            if short == long or long in absorbed:
+                continue
+            long_words = long.lower().split()
+            if len(long_words) > len(short_words) and long_words[:len(short_words)] == short_words:
+                combined_counts[long] += combined_counts[short]
+                combined_aliases[long].update(combined_aliases.get(short, {short}))
+                absorbed.add(short)
+                break
+    for name in absorbed:
+        del combined_counts[name]
+        combined_aliases.pop(name, None)
 
     major_characters = [
         character

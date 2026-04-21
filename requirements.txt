@@ -1,2 +1,6 @@
 matplotlib>=3.8,<4.0
 vaderSentiment>=3.3,<4.0
+
+# Optional: significantly improves character name extraction
+# After installing spacy, also run: python -m spacy download en_core_web_sm
+spacy>=3.0
